@@ -61,9 +61,13 @@ class HTTP_handler(BaseHTTPRequestHandler):
                     response = {"result": "0", "message": "Key not found"}
             else:
                 response = {"result": "0", "message": "Invalid parameters"}
-        
+
+        elif path == '/KEYS':
+            # Retourne toutes les données sous forme de JSON
+            response = {"result": "1", "data": database}
+
         else:
-            # Si la requête n'est ni /SET ni /GET
+            # Si la requête n'est ni /SET, /GET, ni /KEYS
             response = {"result": "0", "message": "Invalid endpoint"}
         
         # Envoie la réponse JSON
