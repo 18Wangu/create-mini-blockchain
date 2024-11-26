@@ -2,8 +2,12 @@ import time
 import threading
 import sys
 import json
+import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
+
+# Chemin du fichier de données
+DATA_FILE = "data.blockchain.json"
 
 # Base de données en mémoire
 database = []
@@ -86,17 +90,43 @@ def load_config(config_file):
         print(f"Error parsing JSON configuration file {config_file}. Using defaults.")
         return "127.0.0.1", 6660
 
+def load_data():
+    """Charge les données depuis le fichier JSON s'il existe."""
+    global database
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, 'r') as file:
+                database = json.load(file)
+                print(f"Loaded {len(database)} records from {DATA_FILE}")
+        except json.JSONDecodeError:
+            print(f"Error loading data from {DATA_FILE}, starting with an empty database.")
+    else:
+        print(f"No data file found, starting with an empty database.")
+
+def save_data():
+    """Sauvegarde les données dans le fichier JSON."""
+    try:
+        with open(DATA_FILE, 'w') as file:
+            json.dump(database, file, indent=4)
+            print(f"Data saved to {DATA_FILE}")
+    except IOError as e:
+        print(f"Error saving data to {DATA_FILE}: {e}")
+
 def main():
+    # Charge la configuration et les données au démarrage
     config_file = "config.json"
     host, port = load_config(config_file)
+    load_data()
     
+    # Démarre le serveur
     threads = [Thread(host, port) for _ in range(1)]
-    while True:
-        try:
+    try:
+        while True:
             time.sleep(1)
-        except (KeyboardInterrupt, SystemExit, OSError):
-            print('KeyboardInterrupt detected. Shutting down.')
-            sys.exit()
+    except (KeyboardInterrupt, SystemExit, OSError):
+        print('KeyboardInterrupt detected. Saving data and shutting down.')
+        save_data()
+        sys.exit()
 
 if __name__ == "__main__":
     main()
