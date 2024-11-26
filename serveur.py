@@ -3,6 +3,7 @@ import threading
 import sys
 import json
 import os
+import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs
 
@@ -11,6 +12,11 @@ DATA_FILE = "data.blockchain.json"
 
 # Base de données en mémoire
 database = []
+
+def compute_hash(entry):
+    """Calcule le hachage SHA224 basé sur index, key et value."""
+    data = str(entry["index"]) + entry["key"] + entry["value"]
+    return hashlib.sha224(data.encode()).hexdigest()
 
 class HTTP_handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -34,6 +40,8 @@ class HTTP_handler(BaseHTTPRequestHandler):
                         "key": key,
                         "value": value
                     }
+                    # Ajoute le hachage `id`
+                    new_block["id"] = compute_hash(new_block)
                     database.append(new_block)
                     response = {"result": "1", "message": "Key-Value pair added"}
             else:
